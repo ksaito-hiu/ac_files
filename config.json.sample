@@ -1,0 +1,26 @@
+{
+  "server": {
+    "priv_key": "./tls/privkey.pem",
+    "cert_key": "./tls/certkey.pem",
+    "port": 8443,
+    "mount_path": "/ac_files/",
+    "session": {
+      "secret": "some secret string",
+      "maxAge": 10800000
+    }
+  },
+  "identity": {
+    "webid2id": null,
+    "id2webid": null
+  },
+  "auth": {
+    "issuer": "accounts.google.com",
+    "client_id": "please_specify_your_client_id",
+    "client_secret": "secret_password",
+    "redirect_uris": [ "https://localhost:8443/auth/callback" ],
+    "post_logout_redirect_uri": "https://localhost:8443/"
+  },
+  "files": {
+    "root": "./files/"
+  }
+}
