@@ -17,8 +17,8 @@
     "issuer": "accounts.google.com",
     "client_id": "please_specify_your_client_id",
     "client_secret": "secret_password",
-    "redirect_uris": [ "https://localhost:8443/auth/callback" ],
-    "post_logout_redirect_uri": "https://localhost:8443/"
+    "redirect_uris": [ "https://localhost:8443/ac_files/auth/callback" ],
+    "post_logout_redirect_uri": "https://localhost:8443/ac_files/"
   },
   "files": {
     "root": "./files/"
