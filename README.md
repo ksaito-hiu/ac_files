@@ -1,5 +1,12 @@
 # ac_files
 
+An access controled file server.
+This software aims only our private use.
+
+The '.uids' files are used like '.htpasswd'.
+But '.uids' includes only user IDs. If you need
+a public directory, include 'any authorized users'
+line in '.uids'.
 
 Memo
 -----
@@ -38,3 +45,41 @@ server {
   }
 }
 ```
+
+-----
+
+systemd
+
+ubuntu: /lib/systemd/system/ac_files.service
+
+```
+[Unit]
+Description=An access controled file server
+Documentation=https://github.com/ksaito-hiu/ac_files
+After=network.target
+
+[Service]
+Type=simple
+User=some_user     # <-- change!
+WorkingDirectory=/some/working/directory/path # <-- change!
+ExecStart=/some/working/directory/path/start.sh # <-- change!
+Restart=on-failure
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ac_files
+
+[Install]
+WantedBy=multi-user.target
+
+```
+
+-----
+
+syslog
+
+Ubuntu: /etc/rsyslog.d/ac_files.conf
+
+```
+:programname, startswith, "ac_files" /var/log/ac_files.log
+```
+

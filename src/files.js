@@ -27,7 +27,7 @@ const init = async function(config) {
         if (the_path.endsWith('/')) {
           const files = await readdir(the_path);
           files.unshift(parentDir);
-          let c_path = path.join(config.server.mount_path,'files/',req.path);
+          let c_path = path.join(config.server.mount_path,req.path);
           const baseUrl = config.server.mount_path;
           res.render('files/dir_index', {
             c_path, files, baseUrl,
@@ -78,6 +78,8 @@ const init = async function(config) {
         }
         const files = [];
         for (let e of dirents) {
+          if (e==='.uids')
+            continue;
           const f = await stat(path.join(dir,e));
           f.name = e; // 無理矢理追加
           files.push(f);
@@ -93,8 +95,20 @@ const init = async function(config) {
     if (!!req.session && !!req.session.uid)
       uid = req.session.uid;
     if (!uid) {
-      const loginURL = config.server.mount_path+'auth/login?return_path='+config.server.mount_path.slice(0,-1)+req.originalUrl;
-      res.redirect(loginURL);
+      // Web APIでの使用を優先してloginしていない
+      // 時にloginページにリダイレクトさせるのはやめる
+      //const loginURL = config.server.mount_path+'auth/login?return_path='+config.server.mount_path.slice(0,-1)+req.originalUrl;
+      //res.redirect(loginURL);
+      // アプリのTopページだけは認証されて
+      // なくても表示されるようにしておく。
+      if (req.path==='/') {
+        next();
+        return;
+      }
+      res.status(401).render('error.ejs',{
+        msg: 'You are not authorized.',
+        baseUrl: config.server.mount_path
+      });
       return;
     }
     next();
@@ -130,6 +144,9 @@ const init = async function(config) {
       if (u === uid) {
         next();
         return;
+      } else if (u === 'any authorized users') {
+        next();
+        return;
       }
     }
     res.status(403).render('error.ejs',{
@@ -139,6 +156,11 @@ const init = async function(config) {
     return;
   }
 
+  router.get('/',loginCheck,(req,res,next) => {
+    res.render('top',{
+      uid: req.session.uid,
+    });
+  });
   router.get('/*',loginCheck,
              permissionCheck,
              dirIndex,

@@ -46,16 +46,12 @@ async function ac_files(config) {
   const auth = await auth_init(config);
   app.use('/auth',auth);
 
-  const files = await files_init(config);
-  app.use('/files',files);
-
-  app.get('/', (req, res) => {
-    res.send('Hello World!');
-  });
-
   app.get('/test/', (req, res) => {
     res.send('Hello World2!');
   });
+
+  const files = await files_init(config);
+  app.use('/',files);
 
   return app;
 }
