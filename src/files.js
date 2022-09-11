@@ -1,6 +1,33 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import multer from 'multer';
+//import { URL } from 'url';
+console.log(URL);
+
+async function load_json(file_name) {
+  return JSON.parse(
+    await fs.promises.readFile(
+      new URL(file_name, import.meta.url)
+    )
+  );
+}
+
+// ファイルアップロードのためのミドルウェア
+// loginCheck,writePermissionCheckは済んでる前提
+const storage = multer.diskStorage({
+  destination: function(req,file,cb) {
+    const the_path = path.join(config.files.root,req.path);
+    const p_path = path.dirname(the_path);
+    cb(null,p_path);
+  },
+  filename: function (req,file,cb) {
+    const name = file.originalname;
+    cb(null,name);
+  }
+});
+const upload = multer({storage: storage});
+
 
 /*
  * ルーティング
@@ -12,7 +39,7 @@ const init = async function(config) {
 
   // express.staticの前に置くことでディレクトリの
   // indexを表示できるようにするミドルウェア
-  // ただし、下の方にあるloginCheckとpermissionCheckの
+  // ただし、下の方にあるloginCheckとreadPermissionCheckの
   // 後に置かれておりreq.session.uidとかが使える前提で
   // 書かれている
   const dirIndex = async function(req,res,next) {
@@ -114,10 +141,10 @@ const init = async function(config) {
     next();
   }
 
-  // アクセス件チェック
+  // 読み出しのアクセス権チェック
   // 上のloginCheckの後で呼ばれることを前提にしてる
   // のでreq.session.uidにuidが入っている前提で処理している。
-  async function permissionCheck(req,res,next) {
+  async function readPermissionCheck(req,res,next) {
     const uid = req.session.uid;
     const the_path = path.join(config.files.root,req.path);
     const stats = await fs.promises.stat(the_path);
@@ -128,9 +155,10 @@ const init = async function(config) {
       const parent = path.dirname(the_path);
       uids_file = path.join(parent,'.uids');
     }
-    let uids_str;
+    uids_file='file://'+uids_file;
+    let uids;
     try {
-      uids_str = await fs.promises.readFile(uids_file);
+      uids = await load_json(uids_file);
     } catch(e) {
       res.status(403).render('error.ejs',{
         msg: 'You do not have permission.',
@@ -139,8 +167,54 @@ const init = async function(config) {
       return;
     }
       
-    const uids = uids_str.toString().split(/\n/);
-    for (const u of uids) {
+    for (const u of uids.read) {
+      if (u === uid) {
+        next();
+        return;
+      } else if (u === 'any authorized users') {
+        next();
+        return;
+      }
+    }
+    res.status(403).render('error.ejs',{
+      msg: 'You do not have permission.',
+      baseUrl: config.server.mount_path
+    });
+    return;
+  }
+
+  // 書き込みのアクセス権チェック
+  // 上のloginCheckの後で呼ばれることを前提にしてる
+  // のでreq.session.uidにuidが入っている前提で処理している。
+  // それから、今の所簡単のためにputメソッドで既存のファイル
+  // を更新する用途のみを想定した内容になっている。
+  async function writePermissionCheck(req,res,next) {
+    const uid = req.session.uid;
+    const the_path = path.join(config.files.root,req.path);
+    const stats = await fs.promises.stat(the_path);
+    let uids_file;
+    if (!!stats && stats.isFile()) {
+      const parent = path.dirname(the_path);
+      uids_file = path.join(parent,'.uids');
+    } else {
+      res.status(403).render('error.ejs',{
+        msg: 'You do not have permission.',
+        baseUrl: config.server.mount_path
+      });
+      return;
+    }
+    let uids;
+    try {
+      uids = await load_json(uids_file);
+    } catch(e) {
+      res.status(403).render('error.ejs',{
+        msg: 'You do not have permission.',
+        baseUrl: config.server.mount_path
+      });
+      return;
+    }
+      
+    for (const u of uids.write) {
       if (u === uid) {
         next();
         return;
@@ -162,9 +236,12 @@ const init = async function(config) {
     });
   });
   router.get('/*',loginCheck,
-             permissionCheck,
+             readPermissionCheck,
              dirIndex,
              staticRouter);
+  router.put('/*',loginCheck,
+             writePermissionCheck,
+             upload.single('file'));
 
   return router;
 };

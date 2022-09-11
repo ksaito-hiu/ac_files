@@ -3,10 +3,24 @@
 An access controled file server.
 This software aims only our private use.
 
-The '.uids' files are used like '.htpasswd'.
-But '.uids' includes only user IDs. If you need
-a public directory, include 'any authorized users'
-line in '.uids'.
+The '.uids' files contains JSON data. And it is
+used for access control. The sample of these files
+are below.
+
+```
+{
+  "read": [
+    "any authorized users"
+  ],
+  "write": [
+    "f200088071",
+    "f123456789"
+  ]
+}
+```
+
+If you need a public directory, include the string
+"any authorized users" instead of user ID.
 
 Memo
 -----
