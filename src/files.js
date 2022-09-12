@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
 //import { URL } from 'url';
-console.log(URL);
+//console.log(URL);
 
 async function load_json(file_name) {
   return JSON.parse(
@@ -13,27 +13,28 @@ async function load_json(file_name) {
   );
 }
 
-// ファイルアップロードのためのミドルウェア
-// loginCheck,writePermissionCheckは済んでる前提
-const storage = multer.diskStorage({
-  destination: function(req,file,cb) {
-    const the_path = path.join(config.files.root,req.path);
-    const p_path = path.dirname(the_path);
-    cb(null,p_path);
-  },
-  filename: function (req,file,cb) {
-    const name = file.originalname;
-    cb(null,name);
-  }
-});
-const upload = multer({storage: storage});
-
 
 /*
  * ルーティング
  */
 const init = async function(config) {
   // 上記引数のconfigはで設定。
+
+  // ファイルアップロードのためのミドルウェア
+  // loginCheck,writePermissionCheckは済んでる前提
+  const storage = multer.diskStorage({
+    destination: function(req,file,cb) {
+      const the_path = path.join(config.files.root,req.path);
+      const p_path = path.dirname(the_path);
+      cb(null,p_path);
+    },
+    filename: function (req,file,cb) {
+      const the_path = path.join(config.files.root,req.path);
+      const name = path.basename(the_path);
+      cb(null,name);
+    }
+  });
+  const upload = multer({storage: storage});
 
   const router = express.Router();
 
@@ -241,7 +242,14 @@ const init = async function(config) {
              staticRouter);
   router.put('/*',loginCheck,
              writePermissionCheck,
-             upload.single('file'));
+             upload.single('file'),
+             (req,res)=>{
+               const path = req.file.path.replace(/\\/g,"/");
+               if (path)
+                 res.status(200).send('ok');
+               else
+                 res.states(500).send('error');
+             });
 
   return router;
 };
