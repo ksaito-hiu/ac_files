@@ -133,6 +133,7 @@ const init = async function(config) {
         next();
         return;
       }
+console.log("GAHA: You are not authorized.");
       res.status(401).render('error.ejs',{
         msg: 'You are not authorized.',
         baseUrl: config.server.mount_path
@@ -161,6 +162,7 @@ const init = async function(config) {
     try {
       uids = await load_json(uids_file);
     } catch(e) {
+console.log("GAHA: Can not read the .uids file. "+uids_file);
       res.status(403).render('error.ejs',{
         msg: 'You do not have permission.',
         baseUrl: config.server.mount_path
@@ -177,6 +179,7 @@ const init = async function(config) {
         return;
       }
     }
+console.log("GAHA: You do not have permission.1");
     res.status(403).render('error.ejs',{
       msg: 'You do not have permission.',
       baseUrl: config.server.mount_path
@@ -198,6 +201,7 @@ const init = async function(config) {
       const parent = path.dirname(the_path);
       uids_file = path.join(parent,'.uids');
     } else {
+console.log("GAHA: You do not have permission.2");
       res.status(403).render('error.ejs',{
         msg: 'You do not have permission.',
         baseUrl: config.server.mount_path
@@ -208,6 +212,7 @@ const init = async function(config) {
     try {
       uids = await load_json(uids_file);
     } catch(e) {
+console.log("GAHA: Can not read the .uids file.2 "+uids_file);
       res.status(403).render('error.ejs',{
         msg: 'You do not have permission.',
         baseUrl: config.server.mount_path
@@ -224,6 +229,7 @@ const init = async function(config) {
         return;
       }
     }
+console.log("GAHA: You do not have permission.4");
     res.status(403).render('error.ejs',{
       msg: 'You do not have permission.',
       baseUrl: config.server.mount_path
